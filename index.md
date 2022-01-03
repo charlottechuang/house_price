@@ -1,37 +1,35 @@
-## Welcome to GitHub Pages
+import os
+from tensorflow import keras
+from flask import Flask,request,render_template,redirect,url_for
+import joblib
+from werkzeug.datastructures import ImmutableMultiDict
+import pandas as pd
 
-You can use the [editor on GitHub](https://github.com/charlottechuang/house_price/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+app=Flask(__name__)
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+model=joblib.load('clf.pkl')
 
-### Markdown
+def get_form_to_result(form):
+    form=pd.DataFrame(form,index=[0]) #
+    prediction=model.predict(form)
+    return prediction
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+@app.route("/")
+def formPage():
+    return render_template('House_Feature_Form.html')
 
-```markdown
-Syntax highlighted code block
 
-# Header 1
-## Header 2
-### Header 3
+@app.route('/submit',methods=['POST'])
+def submit():
+    if request.method=='POST':
+        global form_dct
+        form_dct=request.values.to_dict()   #取得使用者上傳的表單並轉換成字典形式
+        return redirect(url_for('success'))
 
-- Bulleted
-- List
+@app.route('/success')
+def success():
+    prediction=get_form_to_result(form_dct)
+    return render_template('result.html',prediction = prediction)
 
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/charlottechuang/house_price/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+if __name__ == "__main__":
+    app.run()
